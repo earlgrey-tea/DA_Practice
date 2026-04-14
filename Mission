@@ -1,0 +1,108 @@
+CREATE DATABASE fandomk;
+USE fandomk;
+
+-- 1. users : 사용자 정보 및 크레딧 관리
+CREATE TABLE users (
+	user_id INT PRIMARY KEY,
+    user_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    profile_image VARCHAR(255) NOT NULL,
+    credits INT NOT NULL
+);
+
+-- 2. artists : 아티스트 정보
+CREATE TABLE artists (
+    artist_id INT PRIMARY KEY,
+    artist_name VARCHAR(100) NOT NULL,
+    profile_image VARCHAR(255),
+    agency VARCHAR(100) NOT NULL,
+    artist_type VARCHAR(50) NOT NULL
+);
+
+-- 3. projects : 조공 프로젝트
+CREATE TABLE projects (
+    project_id INT PRIMARY KEY,
+    artist_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NOT NULL, -- 조공 내용 설명
+    target_credit INT NOT NULL,
+    current_credit INT NOT NULL DEFAULT 0,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_projects_artists
+        FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+);
+
+-- 4. artist_follow : 사용자가 팔로우하는 아티스트 (나만의 아티스트)
+CREATE TABLE artist_follow (
+    follow_id INT PRIMARY KEY,
+    followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT NOT NULL,
+    artist_id INT NOT NULL,
+    CONSTRAINT fk_artist_follow_users
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_artist_follow_artists
+        FOREIGN KEY (artist_id) REFERENCES artists(artist_id),
+    CONSTRAINT uq_artist_follow UNIQUE (user_id, artist_id)
+);
+
+-- 5. votes : 사용자의 투표 기록
+CREATE TABLE votes (
+    vote_id INT PRIMARY KEY,
+    used_credit INT NOT NULL,
+    voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT NOT NULL,
+    artist_id INT NOT NULL,
+    CONSTRAINT fk_votes_users
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_votes_artists
+        FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+);
+
+-- 6. credit_charges : 크레딧 충전 내역
+CREATE TABLE credit_charges (
+    charge_id INT PRIMARY KEY,
+    amount INT NOT NULL,
+    payment_method VARCHAR(100) NOT NULL,
+    charged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT NOT NULL,
+    CONSTRAINT fk_credit_charges_users
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- 7. monthly_artists : 월간 아티스트 랭킹 (이 달의 아티스트)
+CREATE TABLE monthly_artists (
+    monthly_artist_id INT PRIMARY KEY,
+    artist_id INT NOT NULL,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    rank_num INT NOT NULL,
+    CONSTRAINT fk_monthly_artists_artists
+        FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+);
+
+-- 8. charts : 투표 결과
+CREATE TABLE charts (
+    chart_id INT PRIMARY KEY,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    votes INT NOT NULL,
+    chart_type VARCHAR(50) NOT NULL,
+    artist_id INT NOT NULL,
+    CONSTRAINT fk_charts_artists
+        FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+);
+
+-- 9. donations : 사용자 후원 내역
+CREATE TABLE donations (
+    donation_id INT PRIMARY KEY,
+    amount INT NOT NULL,
+    donated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT NOT NULL,
+    project_id INT NOT NULL,
+    CONSTRAINT fk_donations_users
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_donations_projects
+        FOREIGN KEY (project_id) REFERENCES projects(project_id)
+);
